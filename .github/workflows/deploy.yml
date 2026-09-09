@@ -25,8 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: build-src/package-lock.json
 
       - name: Fetch upstream anatomy application
         run: |
@@ -38,29 +36,22 @@ jobs:
         run: |
           from pathlib import Path
           root = Path('build-src')
-
           page = root / 'app/page.tsx'
           s = page.read_text()
           s = s.replace('<h1>Human Atlas<Badge', '<h1>Inside Out<Badge')
           s = s.replace('INTERACTIVE ANATOMY', 'INSIDE OUT · INTERACTIVE ANATOMY')
           s = s.replace("{atlas?atlas.parts.length.toLocaleString():'2,234'} modeled pieces", "{atlas?atlas.parts.length.toLocaleString():'2,234'} anatomical pieces")
           page.write_text(s)
-
           index = root / 'web/index.html'
-          s = index.read_text()
-          s = s.replace('<title>Human Atlas</title>', '<title>Inside Out — Interactive 3D Anatomy</title>')
-          s = s.replace('An interactive atlas of the human body.', 'Inside Out is an interactive 3D anatomy explorer.')
-          index.write_text(s)
-
+          if index.exists():
+            s = index.read_text()
+            s = s.replace('<title>Human Atlas</title>', '<title>Inside Out — Interactive 3D Anatomy</title>')
+            s = s.replace('An interactive atlas of the human body.', 'Inside Out is an interactive 3D anatomy explorer.')
+            index.write_text(s)
           pkg = root / 'package.json'
           s = pkg.read_text()
           s = s.replace('"name": "anatomy-studio"', '"name": "inside-out-anatomy"')
           pkg.write_text(s)
-
-          readme = root / 'README.md'
-          original = readme.read_text()
-          header = '''# Inside Out\n\n**See how you work.** An interactive 3D anatomy explorer built on the Human Atlas application and BodyParts3D reference geometry.\n\nThis deployment preserves the upstream project's source and attribution. BodyParts3D anatomy data remains under its stated CC BY 4.0 terms; the application source remains under its stated MIT terms.\n\n---\n\n'''
-          readme.write_text(header + original)
 
       - name: Install dependencies
         working-directory: build-src
