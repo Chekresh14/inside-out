@@ -1,0 +1,93 @@
+name: Deploy Inside Out
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout launcher
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: build-src/package-lock.json
+
+      - name: Fetch upstream anatomy application
+        run: |
+          git clone --depth 1 https://github.com/ashemag/human-atlas.git build-src
+          rm -rf build-src/.git
+
+      - name: Apply Inside Out branding
+        shell: python
+        run: |
+          from pathlib import Path
+          root = Path('build-src')
+
+          page = root / 'app/page.tsx'
+          s = page.read_text()
+          s = s.replace('<h1>Human Atlas<Badge', '<h1>Inside Out<Badge')
+          s = s.replace('INTERACTIVE ANATOMY', 'INSIDE OUT · INTERACTIVE ANATOMY')
+          s = s.replace("{atlas?atlas.parts.length.toLocaleString():'2,234'} modeled pieces", "{atlas?atlas.parts.length.toLocaleString():'2,234'} anatomical pieces")
+          page.write_text(s)
+
+          index = root / 'web/index.html'
+          s = index.read_text()
+          s = s.replace('<title>Human Atlas</title>', '<title>Inside Out — Interactive 3D Anatomy</title>')
+          s = s.replace('An interactive atlas of the human body.', 'Inside Out is an interactive 3D anatomy explorer.')
+          index.write_text(s)
+
+          pkg = root / 'package.json'
+          s = pkg.read_text()
+          s = s.replace('"name": "anatomy-studio"', '"name": "inside-out-anatomy"')
+          pkg.write_text(s)
+
+          readme = root / 'README.md'
+          original = readme.read_text()
+          header = '''# Inside Out\n\n**See how you work.** An interactive 3D anatomy explorer built on the Human Atlas application and BodyParts3D reference geometry.\n\nThis deployment preserves the upstream project's source and attribution. BodyParts3D anatomy data remains under its stated CC BY 4.0 terms; the application source remains under its stated MIT terms.\n\n---\n\n'''
+          readme.write_text(header + original)
+
+      - name: Install dependencies
+        working-directory: build-src
+        run: npm ci --no-audit --no-fund
+
+      - name: Build production site
+        working-directory: build-src
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build-src/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
