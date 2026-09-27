@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hyderabad Crime Intelligence</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#e8eef7}
+header{padding:18px 22px;background:#0b1728;border-bottom:1px solid #20334d;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:20px}.badge{font-size:12px;color:#8fb4d8}
+main{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 65px)}
+aside{padding:18px;background:#0a1524;border-right:1px solid #20334d}
+label{display:block;font-size:12px;color:#93a7bd;margin:14px 0 6px}select,input{width:100%;padding:10px;border-radius:8px;border:1px solid #29405c;background:#101f33;color:#fff}
+.card{margin-top:16px;padding:14px;border:1px solid #243b57;border-radius:10px;background:#0d1b2c}
+.kpi{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1e3046;font-size:13px}.kpi:last-child{border:0}
+#map{height:calc(100vh - 65px)}
+.note{font-size:11px;color:#7f95ad;line-height:1.45;margin-top:14px}
+@media(max-width:760px){main{grid-template-columns:1fr}aside{position:absolute;z-index:1000;width:290px;margin:10px;border-radius:12px;box-shadow:0 10px 30px #0008}#map{height:calc(100vh - 65px)}}
+</style>
+</head>
+<body>
+<header><h1>Hyderabad Crime Intelligence</h1><span class="badge">Prototype • official-data-ready</span></header>
+<main>
+<aside>
+<label>Crime type</label><select id="crime"><option>All reported crime</option><option>Theft</option><option>Burglary</option><option>Robbery</option><option>Assault</option><option>Fraud</option></select>
+<label>Time window</label><select id="time"><option>All day</option><option>00:00–06:00</option><option>06:00–12:00</option><option>12:00–18:00</option><option>18:00–00:00</option></select>
+<label>Year</label><select id="year"><option>All available years</option><option>2026</option><option>2025</option><option>2024</option></select>
+<div class="card"><strong>Selected area</strong><div id="area">Click a hotspot or police-station marker.</div></div>
+<div class="card">
+<div class="kpi"><span>Reported incidents</span><b id="cases">—</b></div>
+<div class="kpi"><span>Peak period</span><b id="peak">—</b></div>
+<div class="kpi"><span>Top category</span><b id="top">—</b></div>
+<div class="kpi"><span>Police jurisdiction</span><b id="ps">—</b></div>
+</div>
+<div class="note">This prototype visualizes the interface and analysis pipeline. Real incident-level figures should only be populated from verified public/authorized data; no private addresses or unverified criminal profiles are displayed.</div>
+</aside>
+<div id="map"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([17.385,78.4867],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
+const points=[
+ {name:'Banjara Hills',lat:17.4156,lon:78.4347,cases:42,peak:'20:00–00:00',top:'Theft',ps:'Banjara Hills PS'},
+ {name:'Madhapur',lat:17.4483,lon:78.3915,cases:58,peak:'18:00–00:00',top:'Fraud',ps:'Madhapur PS'},
+ {name:'Secunderabad',lat:17.4399,lon:78.4983,cases:51,peak:'18:00–22:00',top:'Theft',ps:'Secunderabad PS'},
+ {name:'Charminar',lat:17.3616,lon:78.4747,cases:36,peak:'18:00–22:00',top:'Robbery',ps:'Charminar PS'},
+ {name:'Kukatpally',lat:17.4849,lon:78.4138,cases:47,peak:'20:00–00:00',top:'Theft',ps:'Kukatpally PS'}
+];
+function select(p){
+ document.getElementById('area').textContent=p.name;
+ document.getElementById('cases').textContent=p.cases;
+ document.getElementById('peak').textContent=p.peak;
+ document.getElementById('top').textContent=p.top;
+ document.getElementById('ps').textContent=p.ps;
+}
+points.forEach(p=>{
+ const m=L.circleMarker([p.lat,p.lon],{radius:10,weight:2,fillOpacity:.7,color:'#ff4d5d',fillColor:'#ff263d'})
+ .addTo(map).bindTooltip(p.name).on('click',()=>select(p));
+});
+</script>
+</body>
+</html>
