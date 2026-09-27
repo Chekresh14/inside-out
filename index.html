@@ -3,62 +3,145 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hyderabad Crime Intelligence</title>
+<title>Inside Out — Hyderabad Safety Intelligence</title>
+<link rel="preconnect" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#e8eef7}
-header{padding:18px 22px;background:#0b1728;border-bottom:1px solid #20334d;display:flex;justify-content:space-between;align-items:center}
-h1{margin:0;font-size:20px}.badge{font-size:12px;color:#8fb4d8}
-main{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 65px)}
-aside{padding:18px;background:#0a1524;border-right:1px solid #20334d}
-label{display:block;font-size:12px;color:#93a7bd;margin:14px 0 6px}select,input{width:100%;padding:10px;border-radius:8px;border:1px solid #29405c;background:#101f33;color:#fff}
-.card{margin-top:16px;padding:14px;border:1px solid #243b57;border-radius:10px;background:#0d1b2c}
-.kpi{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1e3046;font-size:13px}.kpi:last-child{border:0}
-#map{height:calc(100vh - 65px)}
-.note{font-size:11px;color:#7f95ad;line-height:1.45;margin-top:14px}
-@media(max-width:760px){main{grid-template-columns:1fr}aside{position:absolute;z-index:1000;width:290px;margin:10px;border-radius:12px;box-shadow:0 10px 30px #0008}#map{height:calc(100vh - 65px)}}
+:root{--bg:#07111d;--panel:#0b1726;--panel2:#101f31;--line:#21354d;--text:#edf4fb;--muted:#8da2b8;--accent:#55c2ff;--hot:#ff5364;--ok:#43d19a}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+body{overflow:hidden}.app{height:100%;display:grid;grid-template-columns:360px 1fr;grid-template-rows:64px 1fr}
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(7,17,29,.96);border-bottom:1px solid var(--line);z-index:2000}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:34px;height:34px;border:1px solid #315170;border-radius:10px;display:grid;place-items:center;color:var(--accent);font-weight:800;background:#0d1c2e}
+h1{font-size:18px;margin:0;letter-spacing:.2px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.status{font-size:11px;color:#a9bad0;border:1px solid var(--line);padding:7px 10px;border-radius:999px;background:#0b1726}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:18px 16px 28px;z-index:1000}
+.search{display:flex;gap:8px;margin-bottom:14px}.search input{flex:1}
+input,select,button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid #2a435f;border-radius:9px;padding:10px}
+button{cursor:pointer}button:hover{border-color:#4f759b}.primary{background:#12314a;border-color:#315f82}
+label{display:block;font-size:11px;color:var(--muted);margin:12px 0 6px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:9px}.filters .wide{grid-column:1/-1}
+.card{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(14,29,46,.82)}
+.card h2{font-size:13px;margin:0 0 11px}.tiny{font-size:10px;color:var(--muted);line-height:1.5}
+.area-name{font-size:18px;font-weight:750}.jurisdiction{font-size:11px;color:var(--accent);margin-top:3px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:10px;border-radius:9px;background:#0d1c2d;border:1px solid #1d3249}.kpi b{display:block;font-size:18px;margin-top:3px}.kpi span{font-size:10px;color:var(--muted)}
+.bar{height:7px;border-radius:10px;background:#172b41;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--accent);border-radius:10px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin:9px 0}.tag{font-size:9px;border:1px solid #31506d;padding:4px 6px;border-radius:999px;color:#b7c9da}
+#map{height:100%;width:100%}.leaflet-control-zoom a{background:#0c1b2b!important;color:#dce8f3!important;border-color:#29415a!important}
+.legend{position:absolute;right:18px;bottom:18px;z-index:900;background:rgba(8,18,30,.94);border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:10px;min-width:170px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.hot{background:var(--hot)}.cool{background:var(--accent)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0d1c2d;color:#eef5fb;border:1px solid #2a4058}.leaflet-popup-content{font-size:12px}.popup-title{font-weight:750;font-size:14px;margin-bottom:5px}
+.notice{color:#ffd28a}.links a{color:#7dccff;text-decoration:none}.links a:hover{text-decoration:underline}
+@media(max-width:850px){.app{grid-template-columns:1fr;grid-template-rows:60px 1fr}aside{position:absolute;left:10px;top:70px;width:min(350px,calc(100vw - 20px));max-height:calc(100vh - 85px);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px #0008}.status{display:none}}
 </style>
 </head>
 <body>
-<header><h1>Hyderabad Crime Intelligence</h1><span class="badge">Prototype • official-data-ready</span></header>
-<main>
+<div class="app">
+<header>
+  <div class="brand"><div class="logo">IO</div><div><h1>Inside Out · Hyderabad</h1><div class="sub">Public-data safety & crime intelligence</div></div></div>
+  <div class="status">● ANALYSIS MODE · DEMO DATA</div>
+</header>
 <aside>
-<label>Crime type</label><select id="crime"><option>All reported crime</option><option>Theft</option><option>Burglary</option><option>Robbery</option><option>Assault</option><option>Fraud</option></select>
-<label>Time window</label><select id="time"><option>All day</option><option>00:00–06:00</option><option>06:00–12:00</option><option>12:00–18:00</option><option>18:00–00:00</option></select>
-<label>Year</label><select id="year"><option>All available years</option><option>2026</option><option>2025</option><option>2024</option></select>
-<div class="card"><strong>Selected area</strong><div id="area">Click a hotspot or police-station marker.</div></div>
-<div class="card">
-<div class="kpi"><span>Reported incidents</span><b id="cases">—</b></div>
-<div class="kpi"><span>Peak period</span><b id="peak">—</b></div>
-<div class="kpi"><span>Top category</span><b id="top">—</b></div>
-<div class="kpi"><span>Police jurisdiction</span><b id="ps">—</b></div>
-</div>
-<div class="note">This prototype visualizes the interface and analysis pipeline. Real incident-level figures should only be populated from verified public/authorized data; no private addresses or unverified criminal profiles are displayed.</div>
+  <div class="search"><input id="search" placeholder="Search Hyderabad area…"><button class="primary" id="locate">⌖</button></div>
+  <div class="filters">
+    <div><label>Crime category</label><select id="crime"><option>All categories</option><option>Theft</option><option>Burglary</option><option>Robbery</option><option>Assault</option><option>Fraud / Cybercrime</option><option>Women-related offences</option></select></div>
+    <div><label>Year</label><select id="year"><option>All available</option><option>2026</option><option>2025</option><option>2024</option><option>2023</option></select></div>
+    <div><div><label>Time of day</label><select id="time"><option>All day</option><option>00:00–06:00</option><option>06:00–12:00</option><option>12:00–18:00</option><option>18:00–00:00</option></select></div></div>
+    <div><label>Day</label><select id="day"><option>All days</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+  </div>
+
+  <div class="card">
+    <h2>Selected area</h2>
+    <div class="area-name" id="area">Hyderabad</div><div class="jurisdiction" id="ps">Click a map area</div>
+    <div class="tiny" id="summary" style="margin-top:9px">Select an area to inspect its historical pattern, reported-incident profile and police jurisdiction.</div>
+  </div>
+
+  <div class="card">
+    <h2>Area snapshot</h2>
+    <div class="kpis">
+      <div class="kpi"><span>Reported cases</span><b id="cases">—</b></div>
+      <div class="kpi"><span>Trend</span><b id="trend">—</b></div>
+      <div class="kpi"><span>Peak window</span><b id="peak">—</b></div>
+      <div class="kpi"><span>Top category</span><b id="top">—</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Pattern engine</h2>
+    <div class="row"><span>Daytime concentration</span><span class="tag" id="dayScore">—</span></div><div class="bar"><i id="dayBar" style="width:0%"></i></div>
+    <div class="row"><span>Night concentration</span><span class="tag" id="nightScore">—</span></div><div class="bar"><i id="nightBar" style="width:0%"></i></div>
+    <div class="row"><span>Weekend concentration</span><span class="tag" id="weekendScore">—</span></div><div class="bar"><i id="weekendBar" style="width:0%"></i></div>
+    <div class="tiny notice" style="margin-top:10px">These are pattern indicators, not guarantees of safety. Historical reported incidents can reflect reporting and recording differences.</div>
+  </div>
+
+  <div class="card">
+    <h2>Data & records</h2>
+    <div class="tiny links">Designed to connect to official Telangana/Hyderabad public datasets, police jurisdiction GIS and publicly available FIR/case information. Individual private addresses are intentionally excluded.</div>
+    <div class="row"><span>Official sources</span><span class="tag">READY</span></div>
+    <div class="tiny links">
+      <a href="https://data.telangana.gov.in/" target="_blank" rel="noopener">Telangana Open Data</a><br>
+      <a href="https://www.tspolice.gov.in/" target="_blank" rel="noopener">Telangana Police</a><br>
+      <a href="https://hyderabadpolice.gov.in/" target="_blank" rel="noopener">Hyderabad Police</a><br>
+      <a href="https://www.data.gov.in/catalog/crime-india-2021" target="_blank" rel="noopener">India OGD / NCRB</a>
+    </div>
+  </div>
+  <div class="tiny" style="margin-top:12px">Prototype interface. Demo figures are illustrative until verified incident-level data is connected. Do not interpret demo values as real crime statistics or as identifying individuals as criminals.</div>
 </aside>
+
 <div id="map"></div>
-</main>
+<div class="legend"><div><span class="dot hot"></span>higher demo concentration</div><div style="margin-top:6px"><span class="dot cool"></span>police / reference point</div></div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const map=L.map('map').setView([17.385,78.4867],11);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
-const points=[
- {name:'Banjara Hills',lat:17.4156,lon:78.4347,cases:42,peak:'20:00–00:00',top:'Theft',ps:'Banjara Hills PS'},
- {name:'Madhapur',lat:17.4483,lon:78.3915,cases:58,peak:'18:00–00:00',top:'Fraud',ps:'Madhapur PS'},
- {name:'Secunderabad',lat:17.4399,lon:78.4983,cases:51,peak:'18:00–22:00',top:'Theft',ps:'Secunderabad PS'},
- {name:'Charminar',lat:17.3616,lon:78.4747,cases:36,peak:'18:00–22:00',top:'Robbery',ps:'Charminar PS'},
- {name:'Kukatpally',lat:17.4849,lon:78.4138,cases:47,peak:'20:00–00:00',top:'Theft',ps:'Kukatpally PS'}
+const map=L.map('map',{zoomControl:true}).setView([17.385,78.4867],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+const areas=[
+{name:'Banjara Hills',lat:17.4156,lon:78.4347,cases:42,trend:'+4%',peak:'20:00–00:00',top:'Theft',ps:'Banjara Hills Police Station',day:44,night:56,weekend:48,desc:'Illustrative area profile for interface testing.'},
+{name:'Madhapur',lat:17.4483,lon:78.3915,cases:58,trend:'+8%',peak:'18:00–00:00',top:'Fraud / Cybercrime',ps:'Madhapur Police Station',day:38,night:62,weekend:53,desc:'Illustrative area profile for interface testing.'},
+{name:'Secunderabad',lat:17.4399,lon:78.4983,cases:51,trend:'-2%',peak:'18:00–22:00',top:'Theft',ps:'Secunderabad Police Station',day:49,night:51,weekend:46,desc:'Illustrative area profile for interface testing.'},
+{name:'Charminar',lat:17.3616,lon:78.4747,cases:36,trend:'+1%',peak:'18:00–22:00',top:'Robbery',ps:'Charminar Police Station',day:57,night:43,weekend:59,desc:'Illustrative area profile for interface testing.'},
+{name:'Kukatpally',lat:17.4849,lon:78.4138,cases:47,trend:'+5%',peak:'20:00–00:00',top:'Theft',ps:'Kukatpally Police Station',day:42,night:58,weekend:51,desc:'Illustrative area profile for interface testing.'},
+{name:'Gachibowli',lat:17.4401,lon:78.3489,cases:39,trend:'+3%',peak:'18:00–00:00',top:'Fraud / Cybercrime',ps:'Gachibowli Police Station',day:41,night:59,weekend:55,desc:'Illustrative area profile for interface testing.'},
+{name:'Mehdipatnam',lat:17.3948,lon:78.4397,cases:33,trend:'-1%',peak:'18:00–22:00',top:'Theft',ps:'Mehdipatnam Police Station',day:53,night:47,weekend:49,desc:'Illustrative area profile for interface testing.'},
+{name:'LB Nagar',lat:17.3457,lon:78.5522,cases:45,trend:'+6%',peak:'18:00–00:00',top:'Burglary',ps:'LB Nagar Police Station',day:46,night:54,weekend:52,desc:'Illustrative area profile for interface testing.'}
 ];
-function select(p){
+
+const markers=[];
+function fill(p){
  document.getElementById('area').textContent=p.name;
+ document.getElementById('ps').textContent=p.ps;
  document.getElementById('cases').textContent=p.cases;
+ document.getElementById('trend').textContent=p.trend;
  document.getElementById('peak').textContent=p.peak;
  document.getElementById('top').textContent=p.top;
- document.getElementById('ps').textContent=p.ps;
+ document.getElementById('dayScore').textContent=p.day+'%';
+ document.getElementById('nightScore').textContent=p.night+'%';
+ document.getElementById('weekendScore').textContent=p.weekend+'%';
+ document.getElementById('dayBar').style.width=p.day+'%';
+ document.getElementById('nightBar').style.width=p.night+'%';
+ document.getElementById('weekendBar').style.width=p.weekend+'%';
+ document.getElementById('summary').textContent=p.desc+' Filters are applied to the future verified dataset layer.';
 }
-points.forEach(p=>{
- const m=L.circleMarker([p.lat,p.lon],{radius:10,weight:2,fillOpacity:.7,color:'#ff4d5d',fillColor:'#ff263d'})
- .addTo(map).bindTooltip(p.name).on('click',()=>select(p));
+function popup(p){return '<div class="popup-title">'+p.name+'</div><div>Demo reported cases: <b>'+p.cases+'</b></div><div>Peak demo window: '+p.peak+'</div><div>Top demo category: '+p.top+'</div><div style="margin-top:5px;color:#8da2b8">Click to inspect area</div>'}
+areas.forEach(p=>{
+ const m=L.circleMarker([p.lat,p.lon],{radius:11,weight:2,color:'#ff5364',fillColor:'#ff5364',fillOpacity:.62}).addTo(map);
+ m.bindTooltip(p.name,{direction:'top'}).bindPopup(popup(p)).on('click',()=>fill(p));markers.push({p,m});
 });
+const stations=[
+['Hyderabad Police HQ',17.3850,78.4867],['Madhapur PS',17.4483,78.3915],['Banjara Hills PS',17.4156,78.4347],['Kukatpally PS',17.4849,78.4138]
+];
+stations.forEach(s=>L.circleMarker([s[1],s[2]],{radius:5,color:'#55c2ff',fillColor:'#55c2ff',fillOpacity:.9}).addTo(map).bindTooltip(s[0]));
+
+function searchArea(){
+ const q=document.getElementById('search').value.trim().toLowerCase();
+ if(!q)return;
+ const hit=markers.find(x=>x.p.name.toLowerCase().includes(q));
+ if(hit){map.setView([hit.p.lat,hit.p.lon],14);hit.m.openPopup();fill(hit.p);}
+}
+document.getElementById('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchArea()});
+document.getElementById('locate').onclick=()=>map.setView([17.385,78.4867],11);
+document.querySelectorAll('select').forEach(s=>s.addEventListener('change',()=>{document.querySelector('.status').textContent='● FILTERS ACTIVE · DEMO DATA'}));
+fill(areas[0]);
 </script>
 </body>
 </html>
